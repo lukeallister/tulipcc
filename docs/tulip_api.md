@@ -358,6 +358,14 @@ def key(k):
 
 tulip.keyboard_callback() # removes callbacks. 
 
+Keyboard layout is US in the firmware. `tulip.remap()` is the per-key runtime fixup and can write to boot.py for you, but it is capped at 64 entries (`MAX_KEY_REMAPS`) and matches the exact modifier mask, so a full alternate layout like Dvorak (46 keys x 2 shift states) will not fit. For that, build the firmware with `-DTULIP_KEYMAP=DVORAK`:
+
+```bash
+idf.py -DMICROPY_BOARD=TULIP4_R11 -DTULIP_KEYMAP=DVORAK flash
+```
+
+That swaps the US tables in `keyscan.c` for Dvorak ones covering USB HID keyboards. Control combinations stay positional so ctrl-C, ctrl-tab and ctrl-Q keep working, and an I2C keyboard (CardKB) or the on-screen keyboard is not affected. An unset `TULIP_KEYMAP` builds the US layout exactly as before. 
+
 # Return the last touch panel coordinates, up to 3 fingers at once
 (x0, y0, x1, y1, x2, y2) = tulip.touch()
 

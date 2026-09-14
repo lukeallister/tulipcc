@@ -364,6 +364,13 @@ target_compile_definitions(${MICROPY_TARGET} PUBLIC
 
 #LFS2_NO_DEBUG LFS2_NO_WARN LFS2_NO_ERROR 
 
+# Optional alternate keyboard layout for USB keyboards. Build with
+#   idf.py -DMICROPY_BOARD=TULIP4_R11 -DTULIP_KEYMAP=DVORAK flash
+# The default build defines nothing and stays on the US layout.
+if(TULIP_KEYMAP STREQUAL "DVORAK")
+    target_compile_definitions(${MICROPY_TARGET} PUBLIC TULIP_KEYMAP_DVORAK=1)
+endif()
+
 # Disable some warnings to keep the build output clean.
 target_compile_options(${MICROPY_TARGET} PUBLIC
     -Wno-clobbered

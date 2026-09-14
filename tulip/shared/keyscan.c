@@ -16,6 +16,25 @@ uint8_t last_scan[8] = {0,0,0,0,0,0,0,0};
 // Keep track of key_remaps
 key_remap key_remaps[MAX_KEY_REMAPS];
 
+// Optional alternate keyboard layouts. Selected at compile time with
+// -DTULIP_KEYMAP=DVORAK; the default build has neither table and is unchanged.
+// Indexed by USB HID usage id; a 0 entry falls through to the US layout below,
+// so special keys (enter/esc/tab/backspace/arrows/delete/space) are untouched.
+#ifdef TULIP_KEYMAP_DVORAK
+static const char dvorak_unshifted[0x39] = {
+    [0x35] = '`', [0x1e] = '1', [0x1f] = '2', [0x20] = '3', [0x21] = '4', [0x22] = '5', [0x23] = '6', [0x24] = '7', [0x25] = '8', [0x26] = '9', [0x27] = '0', [0x2d] = '[', [0x2e] = ']',
+    [0x14] = '\'', [0x1a] = ',', [0x08] = '.', [0x15] = 'p', [0x17] = 'y', [0x1c] = 'f', [0x18] = 'g', [0x0c] = 'c', [0x12] = 'r', [0x13] = 'l', [0x2f] = '/', [0x30] = '=',
+    [0x04] = 'a', [0x16] = 'o', [0x07] = 'e', [0x09] = 'u', [0x0a] = 'i', [0x0b] = 'd', [0x0d] = 'h', [0x0e] = 't', [0x0f] = 'n', [0x33] = 's', [0x34] = '-',
+    [0x1d] = ';', [0x1b] = 'q', [0x06] = 'j', [0x19] = 'k', [0x05] = 'x', [0x11] = 'b', [0x10] = 'm', [0x36] = 'w', [0x37] = 'v', [0x38] = 'z',
+};
+static const char dvorak_shifted[0x39] = {
+    [0x35] = '~', [0x1e] = '!', [0x1f] = '@', [0x20] = '#', [0x21] = '$', [0x22] = '%', [0x23] = '^', [0x24] = '&', [0x25] = '*', [0x26] = '(', [0x27] = ')', [0x2d] = '{', [0x2e] = '}',
+    [0x14] = '"', [0x1a] = '<', [0x08] = '>', [0x15] = 'P', [0x17] = 'Y', [0x1c] = 'F', [0x18] = 'G', [0x0c] = 'C', [0x12] = 'R', [0x13] = 'L', [0x2f] = '?', [0x30] = '+',
+    [0x04] = 'A', [0x16] = 'O', [0x07] = 'E', [0x09] = 'U', [0x0a] = 'I', [0x0b] = 'D', [0x0d] = 'H', [0x0e] = 'T', [0x0f] = 'N', [0x33] = 'S', [0x34] = '_',
+    [0x1d] = ':', [0x1b] = 'Q', [0x06] = 'J', [0x19] = 'K', [0x05] = 'X', [0x11] = 'B', [0x10] = 'M', [0x36] = 'W', [0x37] = 'V', [0x38] = 'Z',
+};
+#endif
+
 
 // Go _FROM_ cp437 to utf8 bytes
 const uint8_t cp437_to_utf8[] = {
@@ -365,6 +384,15 @@ uint16_t scan_ascii(uint8_t code, uint32_t modifier) {
 #endif    
     //uint8_t alt   = (modifier & KEY_MOD_LALT || modifier & KEY_MOD_RALT);
     //uint8_t meta  = (modifier & KEY_MOD_LMETA || modifier & KEY_MOD_RMETA);
+
+#ifdef TULIP_KEYMAP_DVORAK
+    // Alternate layout lookup, before the US tables below. Skipped while ctrl is
+    // held so control codes / hotkeys (ctrl-C, ctrl-tab, ctrl-Q) stay positional.
+    if(!ctrl) {
+        const char * layout = shift ? dvorak_shifted : dvorak_unshifted;
+        if(code < sizeof(dvorak_unshifted) && layout[code]) return (uint16_t)layout[code];
+    }
+#endif
 
     if(code >= 0x04 && code <= 0x1d) {
         // control-chars
