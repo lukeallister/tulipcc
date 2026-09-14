@@ -35,6 +35,15 @@ static const char dvorak_shifted[0x39] = {
 };
 #endif
 
+// Runtime-selectable layout. KEYMAP_US always exists; KEYMAP_DVORAK only when the
+// tables above were compiled in. Driven by tulip.keymap(), so a user can drop back
+// to the US layout on a running board without reflashing.
+uint8_t keyboard_layout =
+#ifdef TULIP_KEYMAP_DVORAK
+    KEYMAP_DVORAK;
+#else
+    KEYMAP_US;
+#endif
 
 // Go _FROM_ cp437 to utf8 bytes
 const uint8_t cp437_to_utf8[] = {
@@ -386,11 +395,24 @@ uint16_t scan_ascii(uint8_t code, uint32_t modifier) {
     //uint8_t meta  = (modifier & KEY_MOD_LMETA || modifier & KEY_MOD_RMETA);
 
 #ifdef TULIP_KEYMAP_DVORAK
-    // Alternate layout lookup, before the US tables below. Skipped while ctrl is
-    // held so control codes / hotkeys (ctrl-C, ctrl-tab, ctrl-Q) stay positional.
-    if(!ctrl) {
-        const char * layout = shift ? dvorak_shifted : dvorak_unshifted;
-        if(code < sizeof(dvorak_unshifted) && layout[code]) return (uint16_t)layout[code];
+    // Alternate layout, applied before the US tables below. When the layout is
+    // deselected at runtime (tulip.keymap('us')) this is skipped entirely and the
+    // original US logic runs unchanged.
+    if(keyboard_layout == KEYMAP_DVORAK) {
+        if(ctrl) {
+            // ctrl follows the layout, not the physical key position: ctrl-C is
+            // the key printed C (physical I) and ctrl-Q the key printed Q
+            // (physical X), so the REPL interrupt and the quit hotkey land where
+            // a Dvorak typist expects them. Shift is ignored under ctrl, as in
+            // the US path.
+            if(code < sizeof(dvorak_unshifted)) {
+                char mapped = dvorak_unshifted[code];
+                if(mapped >= 'a' && mapped <= 'z') return (uint16_t)((mapped - 'a') + 1);
+            }
+        } else {
+            const char * layout = shift ? dvorak_shifted : dvorak_unshifted;
+            if(code < sizeof(dvorak_unshifted) && layout[code]) return (uint16_t)layout[code];
+        }
     }
 #endif
 

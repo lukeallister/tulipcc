@@ -35,6 +35,8 @@ You _should_ be able to use any USB computer keyboard you already have. We're al
 
 [If you want a more compact hardware keyboard, the tiny "cardKB" will work great with Tulip, plugged into the I2C port.](https://shop.m5stack.com/products/cardkb-mini-keyboard-programmable-unit-v1-1-mega8a)
 
+Tulip's firmware keymap is US. If you type on a **Dvorak** keyboard, the firmware can be built with the Dvorak layout (`-DTULIP_KEYMAP=DVORAK`) and switched back to US at runtime with `tulip.keymap()` — see [Keyboard layout in the Tulip API docs](tulip_api.md).
+
 
 ### DACs or ADCs for modular synths
 

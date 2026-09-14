@@ -41,6 +41,13 @@ typedef struct key_remap {
 
 extern const uint8_t cp437_to_utf8[];
 extern key_remap key_remaps[MAX_KEY_REMAPS];
+
+// Keyboard layouts. KEYMAP_US is always compiled in; KEYMAP_DVORAK only exists in
+// a build made with -DTULIP_KEYMAP=DVORAK. keyboard_layout is the active one and
+// is changed at runtime by tulip.keymap().
+#define KEYMAP_US 0
+#define KEYMAP_DVORAK 1
+extern uint8_t keyboard_layout;
 extern uint8_t last_held_code;
 extern uint16_t last_held_modifier;
 

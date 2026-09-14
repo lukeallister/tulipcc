@@ -1595,6 +1595,34 @@ STATIC mp_obj_t tulip_key_remaps_clear(size_t n_args, const mp_obj_t *args) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(tulip_key_remaps_clear_obj, 0, 0, tulip_key_remaps_clear);
 
+// tulip.keymap() with no args returns the active layout name ("us" or "dvorak").
+// tulip.keymap('us' | 'dvorak' | 0 | 1) switches layout live, no reboot: use it to
+// drop out of Dvorak back to the default US layout from the REPL.
+STATIC mp_obj_t tulip_keymap(size_t n_args, const mp_obj_t *args) {
+    if(n_args == 0) {
+        if(keyboard_layout == KEYMAP_DVORAK) return mp_obj_new_str("dvorak", strlen("dvorak"));
+        return mp_obj_new_str("us", strlen("us"));
+    }
+    int want;
+    if(mp_obj_is_str(args[0])) {
+        const char * name = mp_obj_str_get_str(args[0]);
+        if(!strcmp(name, "us")) want = KEYMAP_US;
+        else if(!strcmp(name, "dvorak")) want = KEYMAP_DVORAK;
+        else mp_raise_ValueError(MP_ERROR_TEXT("keymap must be 'us' or 'dvorak'"));
+    } else {
+        want = (mp_obj_get_int(args[0]) == 0) ? KEYMAP_US : KEYMAP_DVORAK;
+    }
+#ifndef TULIP_KEYMAP_DVORAK
+    if(want == KEYMAP_DVORAK) {
+        mp_raise_ValueError(MP_ERROR_TEXT("dvorak is not in this firmware (build with -DTULIP_KEYMAP=DVORAK)"));
+    }
+#endif
+    keyboard_layout = (uint8_t)want;
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(tulip_keymap_obj, 0, 1, tulip_keymap);
+
 
 STATIC mp_obj_t tulip_key_wait(size_t n_args, const mp_obj_t *args) {
     mp_obj_t tuple[3];
@@ -1923,6 +1951,7 @@ STATIC const mp_rom_map_elem_t tulip_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_touch_delta), MP_ROM_PTR(&tulip_touch_delta_obj) },
     { MP_ROM_QSTR(MP_QSTR_key_remap), MP_ROM_PTR(&tulip_key_remap_obj) },
     { MP_ROM_QSTR(MP_QSTR_key_remaps_clear), MP_ROM_PTR(&tulip_key_remaps_clear_obj) },
+    { MP_ROM_QSTR(MP_QSTR_keymap), MP_ROM_PTR(&tulip_keymap_obj) },
     { MP_ROM_QSTR(MP_QSTR_key_wait), MP_ROM_PTR(&tulip_key_wait_obj) },
     { MP_ROM_QSTR(MP_QSTR_key), MP_ROM_PTR(&tulip_key_obj) },
     { MP_ROM_QSTR(MP_QSTR_key_scan), MP_ROM_PTR(&tulip_key_scan_obj) },

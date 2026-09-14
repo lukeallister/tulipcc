@@ -364,7 +364,18 @@ Keyboard layout is US in the firmware. `tulip.remap()` is the per-key runtime fi
 idf.py -DMICROPY_BOARD=TULIP4_R11 -DTULIP_KEYMAP=DVORAK flash
 ```
 
-That swaps the US tables in `keyscan.c` for Dvorak ones covering USB HID keyboards. Control combinations stay positional so ctrl-C, ctrl-tab and ctrl-Q keep working, and an I2C keyboard (CardKB) or the on-screen keyboard is not affected. An unset `TULIP_KEYMAP` builds the US layout exactly as before. 
+That swaps the US tables in `keyscan.c` for Dvorak ones covering USB HID keyboards. Control combinations follow the layout too, so ctrl-C is the key printed C and ctrl-Q the key printed Q; ctrl-tab and ctrl-Q still switch and quit apps. An I2C keyboard (CardKB) or the on-screen keyboard is not affected. An unset `TULIP_KEYMAP` builds the US layout exactly as before.
+
+In a build that has more than one layout, switch between them live, without rebooting:
+
+```python
+tulip.keymap()          # returns the active layout: 'us' or 'dvorak'
+tulip.keymap('us')      # drop back to the default US layout
+tulip.keymap('dvorak')  # back to Dvorak
+tulip.keymap(1)         # same, by number (0 = us, 1 = dvorak)
+```
+
+`tulip.keymap('dvorak')` on a firmware built without `-DTULIP_KEYMAP=DVORAK` raises `ValueError`. To keep a layout across reboots, put the call in `boot.py`. 
 
 # Return the last touch panel coordinates, up to 3 fingers at once
 (x0, y0, x1, y1, x2, y2) = tulip.touch()
